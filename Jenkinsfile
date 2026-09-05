@@ -1,12 +1,19 @@
+
 pipeline {
 
     agent any
+
+    environment {
+        IMAGE_NAME = "jenkins-k8s-lab"
+        IMAGE_TAG = "${BUILD_NUMBER}"
+    }
 
     stages {
 
         stage('Checkout') {
             steps {
                 echo 'Checking out source code'
+                checkout scm
             }
         }
 
@@ -20,7 +27,20 @@ pipeline {
         stage('Test') {
             steps {
                 echo 'Testing application'
-                sh 'test -f index.html'
+
+                sh '''
+                    test -f index.html
+                    test -f Dockerfile
+                '''
+            }
+        }
+
+        stage('Docker Build') {
+            steps {
+                sh """
+                    docker build \
+                    -t ${IMAGE_NAME}:${IMAGE_TAG} .
+                """
             }
         }
     }
@@ -28,11 +48,11 @@ pipeline {
     post {
 
         success {
-            echo 'Pipeline successful!'
+            echo 'CI pipeline successful!'
         }
 
         failure {
-            echo 'Pipeline failed!'
+            echo 'CI pipeline failed!'
         }
     }
 }
