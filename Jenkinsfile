@@ -1,10 +1,9 @@
-
 pipeline {
 
     agent any
 
     environment {
-        IMAGE_NAME = "jenkins-k8s-lab"
+        IMAGE_NAME = "akshay8175/jenkins-k8s-lab"
         IMAGE_TAG = "${BUILD_NUMBER}"
     }
 
@@ -12,7 +11,6 @@ pipeline {
 
         stage('Checkout') {
             steps {
-                echo 'Checking out source code'
                 checkout scm
             }
         }
@@ -26,8 +24,6 @@ pipeline {
 
         stage('Test') {
             steps {
-                echo 'Testing application'
-
                 sh '''
                     test -f index.html
                     test -f Dockerfile
@@ -43,16 +39,30 @@ pipeline {
                 """
             }
         }
-    }
 
-    post {
+        stage('Docker Push') {
+            steps {
 
-        success {
-            echo 'CI pipeline successful!'
-        }
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'dockerhub-credentials',
+                        usernameVariable: 'DOCKER_USER',
+                        passwordVariable: 'DOCKER_PASSWORD'
+                    )
+                ]) {
 
-        failure {
-            echo 'CI pipeline failed!'
+                    sh '''
+                        echo "$DOCKER_PASSWORD" | \
+                        docker login \
+                        -u "$DOCKER_USER" \
+                        --password-stdin
+
+                        docker push ${IMAGE_NAME}:${IMAGE_TAG}
+
+                        docker logout
+                    '''
+                }
+            }
         }
     }
 }
