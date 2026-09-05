@@ -54,8 +54,7 @@ pipeline {
                     sh '''
                         echo "$DOCKER_PASSWORD" | \
                         docker login \
-                        -u "$DOCKER_USER" \
-                        --password-stdin
+                        -u "$DOCKER_USER"
 
                         docker push ${IMAGE_NAME}:${IMAGE_TAG}
 
